@@ -65,6 +65,7 @@ class CubeRoomAgent {
   const int emergencyStatus = 5;
   const int inactiveStatus = 6;
   const int doorStatus = 7;
+  const int maintenanceStatus = 8;
 
  private:
   const int doorLock = 5;
