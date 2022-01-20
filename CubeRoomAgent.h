@@ -91,6 +91,7 @@ class CubeRoomAgent {
   int gameTime;
   int numberOfPlayers;
 
+  void checkSerialIntegrity();
   bool setNewScore(int, int, int, int);
   int setStatus(int);
   int getRoomDifficultyFromSerial();
