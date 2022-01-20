@@ -119,6 +119,19 @@ int CubeRoomAgent::setStatus(int newStatus) {
   }
 }
 
+void CubeRoomAgent::checkSerialIntegrity() {
+  delay(500);
+  while (true) {
+    Serial.println("{\"type\":9,\"dif\":" + String(difficulty) +
+                   ",\"nop\":" + String(numberOfPlayers) + "}");
+    delay(500);
+    String str = Serial.readStringUntil('\n');
+    if (str == "OK") {
+      return;
+    }
+  }
+}
+
 void CubeRoomAgent::pingAgent() {
   Serial.println("{\"type\":8,\"mem\":" + String(freeMemory()) +
                  ",\"rt\":" + String(millis()) + "}");
@@ -140,6 +153,7 @@ void CubeRoomAgent::updateData() {
   if (roomStatus == activeStatus) {
     difficulty = getRoomDifficultyFromSerial();
     numberOfPlayers = getNumberOfPlayersFromSerial();
+    checkSerialIntegrity();
     active = true;
   } else if (roomStatus == activatedStatus || roomStatus == winStatus ||
              roomStatus == loseStatus || roomStatus == timeoutStatus ||
@@ -164,17 +178,19 @@ void CubeRoomAgent::updateData() {
 bool CubeRoomAgent::isActive() { return active; }
 
 // Update room status
-int CubeRoomAgent::updateRoomStatus(int newStatus) { return setStatus(newStatus); }
+int CubeRoomAgent::updateRoomStatus(int newStatus) {
+  return setStatus(newStatus);
+}
 
 bool CubeRoomAgent::checkEmergency() {
   if (digitalRead(emergency) == HIGH) {
     digitalWrite(doorLock, HIGH);
     updateRoomStatus(emergencyStatus);
-    Serial.println(F("Emergency"));
+    Serial.println(F("Update Room Status: Emergency"));
     lightRed();
     delay(2000);
     updateRoomStatus(loseStatus);
-    Serial.println(F("Lose"));
+    Serial.println(F("Update Room Status: Lose"));
     delay(2000);
 
     return true;
@@ -203,8 +219,8 @@ bool CubeRoomAgent::waitToRun(int doorChangeStateType) {
 
   if (doorChangeStateType != 0) {
     digitalWrite(doorLock, HIGH);
-    Serial.println(F("Door Opened"));
-    while (digitalRead(dTrig) == HIGH) {
+    Serial.println(F("Door Unlocked"));
+    while (getDoorState() == 1) {
       delay(100);
       pingAgent();
       if (millis() > activeTime) {
@@ -213,12 +229,14 @@ bool CubeRoomAgent::waitToRun(int doorChangeStateType) {
         delay(50);
         digitalWrite(doorLock, LOW);
         lightOff();
+        Serial.println("Door timeout - didn't open, return to inactive");
         return false;
       }
     }
+    Serial.println(F("Door Opened"));
   }
   if (doorChangeStateType == 2) {
-    while (digitalRead(dTrig) == LOW) {
+    while (getDoorState() == 0) {
       delay(100);
       pingAgent();
       if (millis() > activeTime) {
@@ -227,6 +245,7 @@ bool CubeRoomAgent::waitToRun(int doorChangeStateType) {
         delay(50);
         digitalWrite(doorLock, LOW);
         lightOff();
+        Serial.println("Door timeout - didn't open, return to inactive");
         return false;
       }
     }
@@ -236,57 +255,76 @@ bool CubeRoomAgent::waitToRun(int doorChangeStateType) {
   digitalWrite(doorLock, LOW);
   updateRoomStatus(activatedStatus);
 
-  Serial.println(F("Door Closed"));
   return true;
 }
 
 void CubeRoomAgent::finishLose() {
-  Serial.println(F("Lose"));
+  Serial.println(F("Update Room Status: Lose"));
   updateRoomStatus(loseStatus);
   lightRed();
-  delay(endDelay);
+  unsigned long endDelayTime = millis() + endDelay;
+  while (millis() < endDelayTime) {
+    pingAgent();
+    delay(1000);
+  }
   lightOff();
 }
 
 void CubeRoomAgent::finishLose(int timeRem) {
-  Serial.println(F("Lose"));
+  Serial.println(F("Update Room Status: Lose"));
   lightRed();
   postScore(0, timeRem);
   updateRoomStatus(loseStatus);
-  delay(endDelay);
+  unsigned long endDelayTime = millis() + endDelay;
+  while (millis() < endDelayTime) {
+    pingAgent();
+    delay(1000);
+  }
   updateRoomStatus(inactiveStatus);
   lightOff();
 }
 
 void CubeRoomAgent::finishTimeout() {
-  Serial.println(F("Timeout"));
+  Serial.println(F("Update Room Status: Timeout"));
   lightRed();
   updateRoomStatus(timeoutStatus);
   postScore(0, 0);
-  delay(endDelay);
+  unsigned long endDelayTime = millis() + endDelay;
+  while (millis() < endDelayTime) {
+    pingAgent();
+    delay(1000);
+  }
   updateRoomStatus(inactiveStatus);
   lightOff();
 }
 
 void CubeRoomAgent::finishWin() {
-  Serial.println(F("Win"));
+  Serial.println(F("Update Room Status: Win"));
   lightGreen();
-  delay(endDelay);
+  unsigned long endDelayTime = millis() + endDelay;
+  while (millis() < endDelayTime) {
+    pingAgent();
+    delay(1000);
+  }
   lightOff();
 }
 
 void CubeRoomAgent::finishWin(int score, int timeRem) {
-  Serial.println(F("Win"));
+  Serial.println(F("Update Room Status: Win"));
   lightGreen();
   postScore(score, timeRem);
   updateRoomStatus(winStatus);
-  delay(endDelay);
+  unsigned long endDelayTime = millis() + endDelay;
+  while (millis() < endDelayTime) {
+    pingAgent();
+    delay(1000);
+  }
   updateRoomStatus(inactiveStatus);
   lightOff();
 }
 
 void CubeRoomAgent::finishWin(int score, int target, int bonus, int timeRem) {
-  Serial.println(F("Win"));
+  Serial.println(F("Update Room Status: Win"));
   lightGreen();
   postScore(score, target, bonus, timeRem);
   if (bonus == 0) {
@@ -294,13 +332,17 @@ void CubeRoomAgent::finishWin(int score, int target, int bonus, int timeRem) {
   } else {
     updateRoomStatus(winStatus);
   }
-  delay(endDelay);
+  unsigned long endDelayTime = millis() + endDelay;
+  while (millis() < endDelayTime) {
+    pingAgent();
+    delay(1000);
+  }
   updateRoomStatus(inactiveStatus);
   lightOff();
 }
 
 void CubeRoomAgent::postScore(int score, int timeRem) {
-  Serial.println("Score: " + String(score));
+  Serial.println("Post Score: " + String(score));
   bool highScore = setNewScore(score, 0, 0, timeRem);
   if (highScore) {
     Serial.println(F("New Highscore"));
@@ -308,7 +350,7 @@ void CubeRoomAgent::postScore(int score, int timeRem) {
 }
 
 void CubeRoomAgent::postScore(int score, int target, int bonus, int timeRem) {
-  Serial.println("Score: " + String(score));
+  Serial.println("Post Score: " + String(score));
   bool highScore = setNewScore(score, target, bonus, timeRem);
   if (highScore) {
     Serial.println(F("New Highscore"));
@@ -383,7 +425,8 @@ void CubeRoomAgent::lightRGB(int r, int g, int b) {
 // Light Mid Cube
 void CubeRoomAgent::lightMidCube(bool state) { digitalWrite(relay2, state); }
 
-void CubeRoomAgent::lightARGB(int pin, int pixels, int red, int green, int blue) {
+void CubeRoomAgent::lightARGB(int pin, int pixels, int red, int green,
+                              int blue) {
   Adafruit_NeoPixel ledTape(pixels, pin, NEO_RGB + NEO_KHZ800);
   ledTape.begin();
 
