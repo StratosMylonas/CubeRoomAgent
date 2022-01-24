@@ -79,6 +79,7 @@ class CubeRoomAgent {
   const int easyDifficulty = 1;
   const int mediumDifficulty = 2;
   const int hardDifficulty = 3;
+  const int juniorDifficulty = 4;
 
   char *roomName;
 
