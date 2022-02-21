@@ -21,8 +21,9 @@ class CubeRoomAgent {
   int updateRoomStatus(int);
   int getRoomStatus();
 
-  int relay2 = 48;
+  int relay2 = 9;
   int hasMonitor = false;
+  bool hasDoorFrame = false;
 
   void setup();
 
@@ -72,6 +73,10 @@ class CubeRoomAgent {
   const int redLEDPin = 6;
   const int greenLEDPin = 7;
   const int blueLEDPin = 8;
+  
+  const int doorFrameRedPin = 22;
+  const int doorFrameGreenPin = 24;
+  const int doorFrameBluePin = 26;
   const int startPin = 9;
   const int dTrig = 14;
   const int emergency = 31;

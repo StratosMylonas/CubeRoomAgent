@@ -16,6 +16,12 @@ CubeRoomAgent::CubeRoomAgent(char *_roomName) {
 
   pinMode(emergency, INPUT);
   pinMode(relay2, OUTPUT);
+
+  if (hasDoorFrame) {
+    pinMode(doorFrameRedPin, OUTPUT);
+    pinMode(doorFrameGreenPin, OUTPUT);
+    pinMode(doorFrameBluePin, OUTPUT);
+  }
 }
 
 void CubeRoomAgent::printRoomName() {
@@ -363,55 +369,80 @@ int CubeRoomAgent::getDoorState() { return digitalRead(dTrig); }
 // Red
 void CubeRoomAgent::lightRed() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
-    lightARGB(22, 124, 255, 0, 0);
+    lightARGB(22, 138, 255, 0, 0);
   } else {
     digitalWrite(redLEDPin, HIGH);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, LOW);
+    if (hasDoorFrame) {
+      digitalWrite(doorFrameRedPin, HIGH);
+      digitalWrite(doorFrameGreenPin, LOW);
+      digitalWrite(doorFrameBluePin, LOW);
+    }
   }
 }
 
 // Green
 void CubeRoomAgent::lightGreen() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
-    lightARGB(22, 124, 0, 255, 0);
+    lightARGB(22, 138, 0, 255, 0);
   } else {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, HIGH);
     digitalWrite(blueLEDPin, LOW);
+    if (hasDoorFrame) {
+      digitalWrite(doorFrameRedPin, LOW);
+      digitalWrite(doorFrameGreenPin, HIGH);
+      digitalWrite(doorFrameBluePin, LOW);
+    }
   }
 }
 
 // Blue
 void CubeRoomAgent::lightBlue() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
-    lightARGB(22, 124, 0, 0, 255);
+    lightARGB(22, 138, 0, 0, 255);
   } else {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, HIGH);
+    if (hasDoorFrame) {
+      digitalWrite(doorFrameRedPin, LOW);
+      digitalWrite(doorFrameGreenPin, LOW);
+      digitalWrite(doorFrameBluePin, HIGH);
+    }
   }
 }
 
 // Cyan
 void CubeRoomAgent::lightCube() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
-    lightARGBBubbleTrouble(22, 123);
+    lightARGBBubbleTrouble(22, 138);
   } else {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, HIGH);
     digitalWrite(blueLEDPin, HIGH);
+    if (hasDoorFrame) {
+      digitalWrite(doorFrameRedPin, LOW);
+      digitalWrite(doorFrameGreenPin, HIGH);
+      digitalWrite(doorFrameBluePin, HIGH);
+    }
   }
 }
 
 // Off
 void CubeRoomAgent::lightOff() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
-    lightARGB(22, 124, 0, 0, 0);
+    lightARGB(22, 138, 0, 0, 0);
   } else {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, LOW);
+    if (hasDoorFrame) {
+      digitalWrite(doorFrameRedPin, LOW);
+      digitalWrite(doorFrameGreenPin, LOW);
+      digitalWrite(doorFrameBluePin, LOW);
+    }
   }
 }
 
@@ -440,19 +471,19 @@ void CubeRoomAgent::lightARGBBubbleTrouble(int pin, int pixels) {
   Adafruit_NeoPixel ledTape(pixels, pin, NEO_RGB + NEO_KHZ800);
   ledTape.begin();
 
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 16; i++) {
     ledTape.setPixelColor(i, ledTape.Color(0, 0, 255));
   }
-  for (int i = 12; i < 31; i++) {
+  for (int i = 16; i < 35; i++) {
     ledTape.setPixelColor(i, ledTape.Color(0, 255, 0));
   }
-  for (int i = 31; i < 87; i++) {
+  for (int i = 35; i < 100; i++) {
     ledTape.setPixelColor(i, ledTape.Color(105, 10, 85));
   }
-  for (int i = 87; i < 106; i++) {
+  for (int i = 100; i < 117; i++) {
     ledTape.setPixelColor(i, ledTape.Color(0, 255, 0));
   }
-  for (int i = 106; i < 124; i++) {
+  for (int i = 117; i < 138; i++) {
     ledTape.setPixelColor(i, ledTape.Color(0, 0, 255));
   }
   ledTape.show();
