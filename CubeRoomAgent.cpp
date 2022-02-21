@@ -7,15 +7,17 @@
 CubeRoomAgent::CubeRoomAgent(char *_roomName) {
   roomName = _roomName;
 
-  pinMode(redLEDPin, OUTPUT);
-  pinMode(greenLEDPin, OUTPUT);
-  pinMode(blueLEDPin, OUTPUT);
+  if (isBaseStation) {
+    pinMode(redLEDPin, OUTPUT);
+    pinMode(greenLEDPin, OUTPUT);
+    pinMode(blueLEDPin, OUTPUT);
 
-  pinMode(doorLock, OUTPUT);
-  pinMode(dTrig, INPUT);
+    pinMode(doorLock, OUTPUT);
+    pinMode(dTrig, INPUT);
 
-  pinMode(emergency, INPUT);
-  pinMode(relay2, OUTPUT);
+    pinMode(emergency, INPUT);
+    pinMode(relay2, OUTPUT);
+  }
 
   if (hasDoorFrame) {
     pinMode(doorFrameRedPin, OUTPUT);
@@ -150,7 +152,7 @@ void CubeRoomAgent::updateData() {
 
   checkAgentStatus();
 
-  if (!hasMonitor) {
+  if (!hasMonitor && isBaseStation) {
     lightMidCube(false);
   }
 
@@ -161,19 +163,20 @@ void CubeRoomAgent::updateData() {
     numberOfPlayers = getNumberOfPlayersFromSerial();
     checkSerialIntegrity();
     active = true;
-  } else if (roomStatus == activatedStatus || roomStatus == winStatus ||
-             roomStatus == loseStatus || roomStatus == timeoutStatus ||
-             roomStatus == emergencyStatus) {
+  } else if ((roomStatus == activatedStatus || roomStatus == winStatus ||
+              roomStatus == loseStatus || roomStatus == timeoutStatus ||
+              roomStatus == emergencyStatus) &&
+             isBaseStation) {
     int ret = updateRoomStatus(inactiveStatus);
     if (ret == -1) {
       return -1;
     }
-  } else {
+  } else if (isBaseStation) {
     lightOff();
     active = false;
   }
 
-  if (roomStatus == doorStatus) {
+  if (roomStatus == doorStatus && isBaseStation) {
     digitalWrite(doorLock, HIGH);
   } else {
     digitalWrite(doorLock, LOW);
@@ -189,7 +192,7 @@ int CubeRoomAgent::updateRoomStatus(int newStatus) {
 }
 
 bool CubeRoomAgent::checkEmergency() {
-  if (digitalRead(emergency) == HIGH) {
+  if (digitalRead(emergency) == HIGH && isBaseStation) {
     digitalWrite(doorLock, HIGH);
     updateRoomStatus(emergencyStatus);
     Serial.println(F("Update Room Status: Emergency"));
@@ -370,7 +373,7 @@ int CubeRoomAgent::getDoorState() { return digitalRead(dTrig); }
 void CubeRoomAgent::lightRed() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
     lightARGB(22, 138, 255, 0, 0);
-  } else {
+  } else if (isBaseStation) {
     digitalWrite(redLEDPin, HIGH);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, LOW);
@@ -386,7 +389,7 @@ void CubeRoomAgent::lightRed() {
 void CubeRoomAgent::lightGreen() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
     lightARGB(22, 138, 0, 255, 0);
-  } else {
+  } else if (isBaseStation) {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, HIGH);
     digitalWrite(blueLEDPin, LOW);
@@ -402,7 +405,7 @@ void CubeRoomAgent::lightGreen() {
 void CubeRoomAgent::lightBlue() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
     lightARGB(22, 138, 0, 0, 255);
-  } else {
+  } else if (isBaseStation) {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, HIGH);
@@ -418,7 +421,7 @@ void CubeRoomAgent::lightBlue() {
 void CubeRoomAgent::lightCube() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
     lightARGBBubbleTrouble(22, 138);
-  } else {
+  } else if (isBaseStation) {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, HIGH);
     digitalWrite(blueLEDPin, HIGH);
@@ -434,7 +437,7 @@ void CubeRoomAgent::lightCube() {
 void CubeRoomAgent::lightOff() {
   if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
     lightARGB(22, 138, 0, 0, 0);
-  } else {
+  } else if (isBaseStation) {
     digitalWrite(redLEDPin, LOW);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, LOW);
@@ -448,9 +451,11 @@ void CubeRoomAgent::lightOff() {
 
 // Custom
 void CubeRoomAgent::lightRGB(int r, int g, int b) {
-  analogWrite(redLEDPin, r);
-  analogWrite(greenLEDPin, g);
-  analogWrite(blueLEDPin, b);
+  if (isBaseStation) {
+    analogWrite(redLEDPin, r);
+    analogWrite(greenLEDPin, g);
+    analogWrite(blueLEDPin, b);
+  }
 }
 
 // Light Mid Cube
