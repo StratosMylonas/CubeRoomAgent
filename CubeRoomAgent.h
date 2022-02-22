@@ -21,8 +21,8 @@ class CubeRoomAgent {
   int updateRoomStatus(int);
   int getRoomStatus();
 
-  int relay2 = 9;
-  bool hasMonitor = false;
+  int relay = 9;
+  bool hasMonitor = true;
   bool hasDoorFrame = false;
   bool isBaseStation = true;
 

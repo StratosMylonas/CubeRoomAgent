@@ -16,7 +16,9 @@ CubeRoomAgent::CubeRoomAgent(char *_roomName) {
     pinMode(dTrig, INPUT);
 
     pinMode(emergency, INPUT);
-    pinMode(relay2, OUTPUT);
+    if (!hasMonitor) {
+      pinMode(relay, OUTPUT);
+    }
   }
 
   if (hasDoorFrame) {
@@ -459,7 +461,7 @@ void CubeRoomAgent::lightRGB(int r, int g, int b) {
 }
 
 // Light Mid Cube
-void CubeRoomAgent::lightMidCube(bool state) { digitalWrite(relay2, state); }
+void CubeRoomAgent::lightMidCube(bool state) { digitalWrite(relay, state); }
 
 void CubeRoomAgent::lightARGB(int pin, int pixels, int red, int green,
                               int blue) {
