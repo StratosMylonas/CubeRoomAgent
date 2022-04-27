@@ -97,6 +97,7 @@ int CubeRoomAgent::getGameTime() {
   return gameTime;
 }
 
+// Check if agent is running
 void CubeRoomAgent::checkAgentStatus() {
   while (!agentReady) {
     printRoomName();
