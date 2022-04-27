@@ -4,9 +4,12 @@
 */
 #include "CubeRoomAgent.h"
 
+
+// Room pins setup
 CubeRoomAgent::CubeRoomAgent(char *_roomName) {
   roomName = _roomName;
 
+  //isBaseStation is true by default (change by .h file, or in rooms setup)
   if (isBaseStation) {
     pinMode(redLEDPin, OUTPUT);
     pinMode(greenLEDPin, OUTPUT);
@@ -21,6 +24,7 @@ CubeRoomAgent::CubeRoomAgent(char *_roomName) {
     }
   }
 
+  //hasDoorFrame is false by default (change by .h file, or in rooms setup)
   if (hasDoorFrame) {
     pinMode(doorFrameRedPin, OUTPUT);
     pinMode(doorFrameGreenPin, OUTPUT);
@@ -28,11 +32,13 @@ CubeRoomAgent::CubeRoomAgent(char *_roomName) {
   }
 }
 
+// Prints room name
 void CubeRoomAgent::printRoomName() {
   String room = roomName;
   Serial.println("{\"type\":0,\"name\":\"" + room + "\"}");
 }
 
+// Returns room status as a number (defined in .h file)
 int CubeRoomAgent::getRoomStatusFromSerial() {
   String resp = "";
 
@@ -51,6 +57,7 @@ int CubeRoomAgent::getRoomStatusFromSerial() {
   return resp.toInt();
 }
 
+// Returns difficulty 1/2/3
 int CubeRoomAgent::getRoomDifficultyFromSerial() {
   String resp = "";
 
@@ -63,6 +70,7 @@ int CubeRoomAgent::getRoomDifficultyFromSerial() {
   return resp.toInt();
 }
 
+// Returns number of players
 int CubeRoomAgent::getNumberOfPlayersFromSerial() {
   String resp = "";
 
@@ -117,6 +125,7 @@ bool CubeRoomAgent::setNewScore(int score, int target, int bonus, int timeRem) {
   return resp == String("true");
 }
 
+// Sets room status by giving number (check .h file for room_status numbers)
 int CubeRoomAgent::setStatus(int newStatus) {
   delay(500);
   while (true) {
@@ -129,6 +138,7 @@ int CubeRoomAgent::setStatus(int newStatus) {
   }
 }
 
+// Make additional check with the agent, of difficulty and number of players
 void CubeRoomAgent::checkSerialIntegrity() {
   delay(500);
   while (true) {
@@ -142,6 +152,7 @@ void CubeRoomAgent::checkSerialIntegrity() {
   }
 }
 
+// Ping to the agent
 void CubeRoomAgent::pingAgent() {
   Serial.println("{\"type\":8,\"mem\":" + String(freeMemory()) +
                  ",\"rt\":" + String(millis()) + "}");
@@ -193,6 +204,7 @@ int CubeRoomAgent::updateRoomStatus(int newStatus) {
   return setStatus(newStatus);
 }
 
+// Returns if emergency is pressed
 bool CubeRoomAgent::checkEmergency() {
   if (digitalRead(emergency) == HIGH && isBaseStation) {
     digitalWrite(doorLock, HIGH);
@@ -269,6 +281,7 @@ bool CubeRoomAgent::waitToRun(int doorChangeStateType) {
   return true;
 }
 
+// Sets room_status to lose, without posting score
 void CubeRoomAgent::finishLose() {
   Serial.println(F("Update Room Status: Lose"));
   updateRoomStatus(loseStatus);
@@ -281,6 +294,7 @@ void CubeRoomAgent::finishLose() {
   lightOff();
 }
 
+// Sets room_status to lose, with posting score
 void CubeRoomAgent::finishLose(int timeRem) {
   Serial.println(F("Update Room Status: Lose"));
   lightRed();
@@ -295,6 +309,7 @@ void CubeRoomAgent::finishLose(int timeRem) {
   lightOff();
 }
 
+// Sets room_status to timeout and posts score
 void CubeRoomAgent::finishTimeout() {
   Serial.println(F("Update Room Status: Timeout"));
   lightRed();
@@ -309,6 +324,7 @@ void CubeRoomAgent::finishTimeout() {
   lightOff();
 }
 
+// Sets room_status to win, without posting score
 void CubeRoomAgent::finishWin() {
   Serial.println(F("Update Room Status: Win"));
   lightGreen();
@@ -320,6 +336,7 @@ void CubeRoomAgent::finishWin() {
   lightOff();
 }
 
+// Sets room_status to lose, with posting score
 void CubeRoomAgent::finishWin(int score, int timeRem) {
   Serial.println(F("Update Room Status: Win"));
   lightGreen();
@@ -334,6 +351,7 @@ void CubeRoomAgent::finishWin(int score, int timeRem) {
   lightOff();
 }
 
+// Sets room_status to lose, with posting score, target and bonus
 void CubeRoomAgent::finishWin(int score, int target, int bonus, int timeRem) {
   Serial.println(F("Update Room Status: Win"));
   lightGreen();
@@ -352,6 +370,7 @@ void CubeRoomAgent::finishWin(int score, int target, int bonus, int timeRem) {
   lightOff();
 }
 
+// Posts score and remaining time
 void CubeRoomAgent::postScore(int score, int timeRem) {
   Serial.println("Post Score: " + String(score));
   bool highScore = setNewScore(score, 0, 0, timeRem);
@@ -360,6 +379,7 @@ void CubeRoomAgent::postScore(int score, int timeRem) {
   }
 }
 
+// Posts score, remaining time, target and bonus
 void CubeRoomAgent::postScore(int score, int target, int bonus, int timeRem) {
   Serial.println("Post Score: " + String(score));
   bool highScore = setNewScore(score, target, bonus, timeRem);
@@ -368,18 +388,20 @@ void CubeRoomAgent::postScore(int score, int target, int bonus, int timeRem) {
   }
 }
 
+// Returns state of door magnetic trigger
 int CubeRoomAgent::getDoorState() { return digitalRead(dTrig); }
+
 
 //------------------RGB States------------------
 // Red
 void CubeRoomAgent::lightRed() {
-  if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) {
+  if (strcmp(roomName, "BUBBLE_TROUBLE") == 0) { //only for BUBBLE_TROUBLE room
     lightARGB(22, 138, 255, 0, 0);
-  } else if (isBaseStation) {
+  } else if (isBaseStation) {                    //general base station
     digitalWrite(redLEDPin, HIGH);
     digitalWrite(greenLEDPin, LOW);
     digitalWrite(blueLEDPin, LOW);
-    if (hasDoorFrame) {
+    if (hasDoorFrame) {                          //if room has door frame
       digitalWrite(doorFrameRedPin, HIGH);
       digitalWrite(doorFrameGreenPin, LOW);
       digitalWrite(doorFrameBluePin, LOW);
@@ -451,7 +473,7 @@ void CubeRoomAgent::lightOff() {
   }
 }
 
-// Custom
+// Custom color
 void CubeRoomAgent::lightRGB(int r, int g, int b) {
   if (isBaseStation) {
     analogWrite(redLEDPin, r);
@@ -463,6 +485,7 @@ void CubeRoomAgent::lightRGB(int r, int g, int b) {
 // Light Mid Cube
 void CubeRoomAgent::lightMidCube(bool state) { digitalWrite(relay, state); }
 
+// Light addressable RGB strip
 void CubeRoomAgent::lightARGB(int pin, int pixels, int red, int green,
                               int blue) {
   Adafruit_NeoPixel ledTape(pixels, pin, NEO_RGB + NEO_KHZ800);
@@ -474,6 +497,7 @@ void CubeRoomAgent::lightARGB(int pin, int pixels, int red, int green,
   }
 }
 
+// Light addressable RGB strip for Bubble Trouble
 void CubeRoomAgent::lightARGBBubbleTrouble(int pin, int pixels) {
   Adafruit_NeoPixel ledTape(pixels, pin, NEO_RGB + NEO_KHZ800);
   ledTape.begin();
